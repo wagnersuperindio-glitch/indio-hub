@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { AGENTES, CATEGORIAS, type Agente, type Categoria } from '@/data/agentes'
 import AgentCard from '@/components/hub/AgentCard'
 import ChatPanel from '@/components/hub/ChatPanel'
@@ -14,7 +15,8 @@ export default function HubPage() {
 
   const agenteFiltrados = AGENTES.filter(a => {
     const matchCategoria = categoriaFiltro === 'todos' || a.categoria === categoriaFiltro
-    const matchBusca = !busca || a.nome.toLowerCase().includes(busca.toLowerCase()) ||
+    const matchBusca = !busca ||
+      a.nome.toLowerCase().includes(busca.toLowerCase()) ||
       a.descricao.toLowerCase().includes(busca.toLowerCase()) ||
       a.capacidades.some(c => c.toLowerCase().includes(busca.toLowerCase()))
     return matchCategoria && matchBusca
@@ -27,71 +29,97 @@ export default function HubPage() {
   }
 
   function abrirAgente(agente: Agente) {
-    if (agente.tipo === 'link' && agente.url) {
+    // Agentes com painel externo vão direto para o sistema
+    if (agente.url && (agente.tipo === 'link' || agente.tipo === 'ambos')) {
       window.open(agente.url, '_blank')
-    } else {
-      setAgenteAtivo(agente)
+      return
     }
+    // Demais abrem o painel lateral
+    setAgenteAtivo(agente)
   }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#F0F2F8' }}>
-      {/* Header */}
-      <header className="sticky top-0 z-50 flex items-center gap-4 px-6 py-3 border-b shadow-sm"
-        style={{ background: 'linear-gradient(135deg, #0D1B2A 0%, #1B2A4A 100%)', borderColor: '#E65100' }}>
+
+      {/* ── HEADER ────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-50 flex items-center gap-4 px-4 py-2 shadow-lg"
+        style={{ background: 'linear-gradient(135deg, #0D1B2A 0%, #1B2A4A 100%)', borderBottom: '3px solid #E65100' }}>
+
+        {/* Logo + Mascote */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          <span className="text-2xl">🪶</span>
-          <div>
-            <h1 className="text-lg font-black text-white leading-none">
-              ÍNDIO <span style={{ color: '#FF8C42' }}>HUB</span>
-            </h1>
-            <p className="text-white/40 text-xs">Central de Agentes</p>
+          <div className="relative w-10 h-10">
+            <Image src="/mascote-novo.png" alt="Mascote Índio" fill className="object-contain" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative h-8 w-24 hidden sm:block">
+              <Image src="/logo.png" alt="Supermercados Índio" fill className="object-contain object-left" />
+            </div>
+            <div className="sm:hidden">
+              <span className="text-lg font-black text-white">ÍNDIO</span>
+            </div>
+            <div className="h-6 w-px bg-white/20 mx-1" />
+            <div>
+              <p className="text-xs font-bold text-orange-400 uppercase tracking-widest leading-none">HUB</p>
+              <p className="text-white/40 text-xs leading-none">Central de Agentes</p>
+            </div>
           </div>
         </div>
 
-        {/* Barra de busca */}
+        {/* Busca */}
         <div className="flex-1 max-w-md mx-auto relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
           <input
             type="text"
             value={busca}
             onChange={e => setBusca(e.target.value)}
             placeholder="Buscar agente ou capacidade..."
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:border-orange-500"
+            className="w-full pl-9 pr-4 py-2 rounded-xl bg-white/10 border border-white/10 text-white placeholder-white/30 text-sm focus:outline-none focus:border-orange-500 transition"
           />
         </div>
 
+        {/* Info + Logout */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="text-right hidden sm:block">
-            <p className="text-white/80 text-sm font-medium">Grupo Índio</p>
-            <p className="text-white/40 text-xs">{AGENTES.length} agentes ativos</p>
+          <div className="text-right hidden md:block">
+            <p className="text-white/80 text-sm font-semibold leading-none">Grupo Índio</p>
+            <p className="text-white/40 text-xs">{AGENTES.length} agentes</p>
           </div>
           <button onClick={handleLogout}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition text-sm">
-            <LogOut size={16} /> Sair
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition text-sm">
+            <LogOut size={15} /> Sair
           </button>
         </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar de categorias */}
-        <aside className="w-52 flex-shrink-0 p-4 border-r bg-white hidden md:flex flex-col gap-1"
+
+        {/* ── SIDEBAR CATEGORIAS ────────────────────────────────── */}
+        <aside className="w-48 flex-shrink-0 p-3 border-r bg-white hidden md:flex flex-col gap-1"
           style={{ borderColor: '#E2E8F0' }}>
-          <div className="flex items-center gap-2 px-3 py-2 mb-2">
-            <LayoutGrid size={14} className="text-gray-400" />
+
+          {/* Mascote na sidebar */}
+          <div className="flex justify-center py-3 mb-1 border-b" style={{ borderColor: '#F1F5F9' }}>
+            <div className="relative w-16 h-16">
+              <Image src="/mascote-novo.png" alt="Mascote" fill className="object-contain" />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 px-2 py-1.5 mb-1">
+            <LayoutGrid size={13} className="text-gray-400" />
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Categorias</span>
           </div>
 
           <button
             onClick={() => setCategoriaFiltro('todos')}
-            className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+            className="flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-all"
             style={{
               background: categoriaFiltro === 'todos' ? '#0D1B2A' : 'transparent',
               color: categoriaFiltro === 'todos' ? 'white' : '#6B7280',
             }}>
-            <span className="flex items-center gap-2">🤖 Todos os agentes</span>
-            <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full"
-              style={categoriaFiltro === 'todos' ? { background: 'rgba(255,255,255,0.2)', color: 'white' } : {}}>
+            <span>🤖 Todos</span>
+            <span className="text-xs px-1.5 py-0.5 rounded-full"
+              style={categoriaFiltro === 'todos'
+                ? { background: 'rgba(255,255,255,0.2)', color: 'white' }
+                : { background: '#F3F4F6', color: '#9CA3AF' }}>
               {AGENTES.length}
             </span>
           </button>
@@ -102,40 +130,63 @@ export default function HubPage() {
             return (
               <button key={key}
                 onClick={() => setCategoriaFiltro(key)}
-                className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+                className="flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-all"
                 style={{
                   background: ativo ? cat.cor + '15' : 'transparent',
                   color: ativo ? cat.cor : '#6B7280',
                   borderLeft: ativo ? `3px solid ${cat.cor}` : '3px solid transparent',
                 }}>
-                <span className="flex items-center gap-2">{cat.emoji} {cat.label}</span>
+                <span>{cat.emoji} {cat.label}</span>
                 <span className="text-xs px-1.5 py-0.5 rounded-full"
-                  style={{ background: ativo ? cat.cor + '20' : '#F3F4F6', color: ativo ? cat.cor : '#9CA3AF' }}>
+                  style={{
+                    background: ativo ? cat.cor + '20' : '#F3F4F6',
+                    color: ativo ? cat.cor : '#9CA3AF'
+                  }}>
                   {count}
                 </span>
               </button>
             )
           })}
+
+          {/* Logo no rodapé da sidebar */}
+          <div className="mt-auto pt-3 border-t" style={{ borderColor: '#F1F5F9' }}>
+            <div className="relative h-8 w-full">
+              <Image src="/logo.png" alt="Índio" fill className="object-contain object-center" />
+            </div>
+            <p className="text-center text-xs text-gray-300 mt-1">❤ Juntos Somos Mais Fortes</p>
+          </div>
         </aside>
 
-        {/* Grid de agentes */}
-        <main className="flex-1 overflow-y-auto p-6">
-          {busca || categoriaFiltro !== 'todos' ? null : (
-            <div className="mb-6 p-4 rounded-2xl text-white"
-              style={{ background: 'linear-gradient(135deg, #0D1B2A 0%, #1B2A4A 100%)', borderLeft: '4px solid #E65100' }}>
-              <h2 className="font-bold text-lg mb-1">
-                🪶 Central de Agentes — Grupo Supermercados Índio
-              </h2>
-              <p className="text-white/60 text-sm">
-                Clique em qualquer agente para interagir diretamente. Cada agente tem ações rápidas para as demandas mais comuns.
-              </p>
+        {/* ── GRID DE AGENTES ───────────────────────────────────── */}
+        <main className="flex-1 overflow-y-auto p-5">
+
+          {/* Banner topo */}
+          {!busca && categoriaFiltro === 'todos' && (
+            <div className="mb-5 rounded-2xl overflow-hidden shadow-sm"
+              style={{ background: 'linear-gradient(135deg, #0D1B2A 0%, #1B2A4A 100%)', borderLeft: '5px solid #E65100' }}>
+              <div className="flex items-center gap-4 p-4">
+                <div className="relative w-16 h-16 flex-shrink-0">
+                  <Image src="/mascote-novo.png" alt="Mascote" fill className="object-contain" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="font-black text-white text-lg leading-tight">
+                    🪶 Central de Agentes — <span style={{ color: '#FF8C42' }}>Grupo Supermercados Índio</span>
+                  </h2>
+                  <p className="text-white/50 text-sm mt-0.5">
+                    Clique num agente para ver as ações disponíveis. Agentes com painel próprio abrem direto no sistema.
+                  </p>
+                </div>
+                <div className="relative h-10 w-28 flex-shrink-0 hidden sm:block">
+                  <Image src="/logo.png" alt="Índio" fill className="object-contain object-right" />
+                </div>
+              </div>
             </div>
           )}
 
           {agenteFiltrados.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
               <p className="text-4xl mb-3">🔍</p>
-              <p className="font-medium">Nenhum agente encontrado para "{busca}"</p>
+              <p className="font-medium">Nenhum agente encontrado para &quot;{busca}&quot;</p>
               <button onClick={() => { setBusca(''); setCategoriaFiltro('todos') }}
                 className="mt-3 text-sm underline">Limpar filtros</button>
             </div>
@@ -153,21 +204,16 @@ export default function HubPage() {
           )}
         </main>
 
-        {/* Chat Panel — slide in lateral */}
+        {/* ── PAINEL LATERAL (apenas agentes sem URL própria) ────── */}
         {agenteAtivo && (
           <>
-            {/* Overlay mobile */}
-            <div className="fixed inset-0 bg-black/40 z-40 md:hidden"
+            <div className="fixed inset-0 bg-black/30 z-40 md:hidden"
               onClick={() => setAgenteAtivo(null)} />
-
             <aside className="fixed md:relative right-0 top-0 md:top-auto h-full md:h-auto
               w-full max-w-md md:w-[420px] z-50 md:z-auto shadow-2xl md:shadow-none
               flex flex-col border-l animate-slide-in md:animate-none"
               style={{ borderColor: '#E2E8F0' }}>
-              <ChatPanel
-                agente={agenteAtivo}
-                onClose={() => setAgenteAtivo(null)}
-              />
+              <ChatPanel agente={agenteAtivo} onClose={() => setAgenteAtivo(null)} />
             </aside>
           </>
         )}
